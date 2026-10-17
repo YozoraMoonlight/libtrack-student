@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "LIBTRACK Student",
+    "slug": "libtrack-student",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "libtrack",
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.libtrack.studentapp",
+      "permissions": [
+        "CAMERA",
+        "INTERNET"
+      ],
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#121212"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.libtrack.studentapp",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "LIBTRACK uses the camera to scan book QR codes for returns."
+      }
+    },
+    "extra": {
+      "origin": "https://libtrack.laravel.cloud"
+    },
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "LIBTRACK uses the camera to scan book QR codes for returns."
+        }
+      ]
+    ]
+  }
+}

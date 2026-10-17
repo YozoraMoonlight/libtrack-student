@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Brand amber, taken from ic_launcher_background.
+
+      This is the colour Android derives the notification's background/accent
+      from. AppTheme.NoActionBar sets no colorAccent, so without this the
+      notification gets AppCompat's default teal instead of LIBTRACK's amber.
+    -->
+    <color name="libtrack_accent">#F5B539</color>
+</resources>

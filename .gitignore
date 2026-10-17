@@ -1,0 +1,115 @@
+# ==========================================================================
+#  LIBTRACK — secrets
+# ==========================================================================
+#  These three are the ones that actually matter. Everything else in this file
+#  is size or tidiness; these are the ones that cost you something to leak.
+
+.env
+.env.backup
+.env.local
+*.key
+
+# The release signing key for LIBTRACK. Anyone holding this can build an
+# update and push it to every student phone - it is the only thing making the
+# app unforgeable. Back it up somewhere private and safe, but never commit it.
+android/keystore.properties
+android/*.keystore
+android/*.jks
+*.p12
+
+# Server credentials. APP_KEY, database password, mail password all live here.
+/auth.json
+/storage/*.key
+Homestead.json
+Homestead.yaml
+
+
+# ==========================================================================
+#  LIBTRACK — build output (regenerable, and large)
+# ==========================================================================
+#  node_modules at ANY depth. The three apps each carry their own, which is
+#  ~565 MB. `npm install` / `composer install` rebuilds them from the lockfiles.
+
+node_modules/
+vendor/
+composer.phar
+
+# Vite / Capacitor web bundle. Rebuilt by `npm run build`.
+dist/
+mobile-improved/dist/
+mobile-app/dist/
+/public/build
+/public/hot
+/public/storage
+/bootstrap/ssr
+android/app/build/
+android/build/
+android/.gradle/
+android/capacitor-cordova-android-plugins/build/
+android/capacitor-cordova-android-plugins/src/main/libs/
+android/app/release/
+mobile-app/.expo/
+mobile-app/android/
+mobile-app/ios/
+*.tsbuildinfo
+
+
+# ==========================================================================
+#  LIBTRACK — local-only scratch, not part of the project
+# ==========================================================================
+
+# A full duplicate of this repository nested inside itself. Committing it
+# means two copies of everything, drifting apart forever.
+upd/
+
+# Local build backups, including built APKs.
+_backup/
+
+# releases/ is NOT ignored - it holds the shareable signed APK, which is the
+# whole point of this repo being a backup. Only the Gradle build output above
+# is ignored, so the artifact lives in one obvious place instead of being
+# buried under android/app/build/.
+
+# A zipped copy of the app.
+mobile-improved.zip
+
+# Local AI/tooling config, not part of the project.
+.claude/
+.opencode/
+
+# Laravel logs. These capture request URLs and can contain student names,
+# LRNs and session data.
+storage/logs/*.log
+
+
+# ==========================================================================
+#  Editors and OS
+# ==========================================================================
+# Matched at every depth, not just the repo root. The Android project keeps
+# its own .idea folder, and those files contain absolute paths from whoever
+# last opened the project in IntelliJ.
+**/.idea/
+**/.vscode/
+/.zed
+/.nova
+/.fleet
+.phpunit.cache
+.phpunit.result.cache
+.phpactor.json
+.DS_Store
+Thumbs.db
+*.swp
+npm-debug.log*
+yarn-error.log*
+
+# Local helper script, not part of the project.
+restore-stable.ps1
+
+
+# ==========================================================================
+#  Deliberately NOT ignored
+# ==========================================================================
+#  mobile-improved/.env.production is committed on purpose. It looks like a
+#  secret file but only holds the public API origin and the Laravel origin -
+#  no credentials. The packaged APK cannot reach the real server without it,
+#  so ignoring it would break the build on a fresh clone.

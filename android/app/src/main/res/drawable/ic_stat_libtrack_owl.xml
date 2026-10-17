@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Notification small icon: the LIBTRACK owl, monochrome.
+
+  Android renders a small notification icon as an alpha mask and tints it, so
+  only the silhouette matters here - the colour is deliberately irrelevant. The
+  eyes are punched out with evenOdd so the owl still reads as an owl at 24dp,
+  which a plain head blob does not.
+
+  Geometry is taken directly from the OwlMascot SVG so this is the same owl:
+  viewBox 0 0 120 96, head path with ear tufts, eyes at cx 43 / 77, cy 52.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="120"
+    android:viewportHeight="96">
+
+    <!-- Head with ear tufts, plus the two eye holes -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M16,116 V40 L24,18 L40,30 H80 L96,18 L104,40 V116 Z M43,52 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z M77,52 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z" />
+</vector>

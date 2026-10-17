@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LIBTRACK Student</string>
+    <string name="title_activity_main">LIBTRACK Student</string>
+    <string name="package_name">com.libtrack.studentapp</string>
+    <string name="custom_url_scheme">com.libtrack.studentapp</string>
+</resources>
