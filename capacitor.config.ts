@@ -13,7 +13,7 @@ const config: CapacitorConfig = {
   },
   plugins: {
     // Route fetch/XHR through the native HTTP stack. Without this the WebView
-    // applies browser CORS to calls to libtrack.laravel.cloud, which sends no
+    // applies browser CORS to calls to the LIBTRACK host, which sends no
     // Access-Control-Allow-Origin header, so every session request would fail.
     // The native layer has no CORS check and keeps Laravel's session cookie.
     CapacitorHttp: {
