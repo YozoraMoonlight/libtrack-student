@@ -12,6 +12,22 @@ but this document covers only the app.
 
 ---
 
+## About this version
+
+This is the **reworked** LIBTRACK student app.
+
+The original app (`mobile-app/` in this repository) was built with Expo and React
+Native. This version was rebuilt as a React + Vite front end in `mobile-improved/` and
+wrapped for Android with Capacitor instead. Doing that rework is what allowed the
+interface to be redesigned end to end — new layout, typography and colour, dark mode,
+reworked Dashboard, Browse, Borrowings, Fines and Settings screens, plus the Help Center
+and Update Logs.
+
+It talks to the same Laravel backend and uses the same student accounts, so nobody has
+to register again for this version.
+
+---
+
 ## What it does
 
 **Accounts**
@@ -230,6 +246,7 @@ mobile-improved/            React app
 android/                    Capacitor Android project
 capacitor.config.ts         Capacitor configuration
 releases/                   Built APK for sharing
+mobile-app/                 Original Expo / React Native app (reference only)
 ```
 
 ---
