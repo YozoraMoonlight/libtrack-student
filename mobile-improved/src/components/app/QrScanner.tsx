@@ -6,34 +6,59 @@ interface QrScannerProps {
   onCancel: () => void;
 }
 
+/** The slice of html5-qrcode's Html5Qrcode that this component drives. */
+type ScannerHandle = {
+  start: (...args: unknown[]) => Promise<unknown>;
+  stop: () => Promise<unknown>;
+};
+
 export function QrScanner({ onScan, onCancel }: QrScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const scannerRef = useRef<{ stop: () => Promise<unknown> } | null>(null);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
   useEffect(() => {
     let active = true;
-    let scanner: { stop: () => Promise<unknown>; start: (...args: unknown[]) => Promise<unknown> } | null = null;
+    let stopped = false;
+    let scanner: ScannerHandle | null = null;
+
+    /**
+     * html5-qrcode's stop() throws a plain string *synchronously* when the
+     * scanner is not in the SCANNING state, and a `.catch()` cannot intercept
+     * a synchronous throw. Two things make that common:
+     *
+     *   - the decode callback stops the camera, then unmounting stops it again
+     *   - closing the sheet before the camera finishes starting leaves the
+     *     scanner in NOT_STARTED, where stop() throws immediately
+     *
+     * Either way the throw escapes an effect cleanup, React treats it as a
+     * fatal render error, and the app-wide error boundary replaces the UI.
+     * Stop at most once, and swallow the throw.
+     */
+    async function stopOnce(target: ScannerHandle | null) {
+      if (!target || stopped) return;
+      stopped = true;
+      try {
+        await target.stop();
+      } catch {
+        // Already stopped, or start() never reached the SCANNING state.
+      }
+    }
 
     async function start() {
       try {
         const { Html5Qrcode } = await import('html5-qrcode');
         if (!active) return;
-        const nextScanner = new Html5Qrcode('mobile-qr-reader') as unknown as {
-          stop: () => Promise<unknown>;
-          start: (...args: unknown[]) => Promise<unknown>;
-        };
+        const nextScanner = new Html5Qrcode('mobile-qr-reader') as unknown as ScannerHandle;
         scanner = nextScanner;
-        scannerRef.current = nextScanner;
         await nextScanner.start(
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 240, height: 240 } },
           (decodedText: string) => {
             if (!active) return;
             onScanRef.current(decodedText);
-            void nextScanner.stop().catch(() => undefined);
+            void stopOnce(nextScanner);
           },
           () => undefined,
         );
@@ -49,8 +74,7 @@ export function QrScanner({ onScan, onCancel }: QrScannerProps) {
     void start();
     return () => {
       active = false;
-      void scanner?.stop().catch(() => undefined);
-      scannerRef.current = null;
+      void stopOnce(scanner);
     };
   }, []);
 

@@ -7,6 +7,14 @@ export const updateLogs: Array<{
   changes: Array<{kind: ChangeKind;text: string;}>;
 }> = [
 {
+  version: '2.2.1',
+  date: '2026-11-13',
+  title: 'Scanner fix',
+  changes: [
+  { kind: 'Fixed', text: 'Scanning a book QR code could show “The app hit an error” right after the code was read. The camera is now shut down safely, once per scan.' },
+  { kind: 'Fixed', text: 'Closing the scanner before the camera finished starting no longer triggers the same error.' }]
+},
+{
   version: '2.2.0',
   date: '2026-10-06',
   title: 'Session persistence',
