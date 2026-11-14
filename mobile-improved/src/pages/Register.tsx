@@ -68,7 +68,16 @@ export function Register() {
       setErrors((current) => ({ ...current, lrn: 'Enter your 12-digit Learner Reference Number.' }));
       return;
     }
-    await lookup(values.lrn);
+    const found = await lookup(values.lrn);
+
+    // The registry already knows the student's number. Prefill it when the
+    // account form is still empty; the student can always type a different one.
+    if (found?.phone) {
+      const digits = found.phone.replace(/\D/g, '').slice(0, 11);
+      if (digits.length === 11) {
+        setValues((current) => (current.mobile ? current : { ...current, mobile: digits }));
+      }
+    }
   }
 
   function handleChangeStudent() {

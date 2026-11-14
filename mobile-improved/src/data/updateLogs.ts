@@ -7,6 +7,20 @@ export const updateLogs: Array<{
   changes: Array<{kind: ChangeKind;text: string;}>;
 }> = [
 {
+  version: '2.3.0',
+  date: '2026-11-14',
+  title: 'Borrow Cart, book covers and notification upgrades',
+  changes: [
+  { kind: 'New', text: 'Borrow Cart: pick titles from Browse (or scan the shelf label), check your school\'s limit, send one request, and collect the books at the desk.' },
+  { kind: 'New', text: 'Book covers now appear in Browse, the book details sheet and the cart. Titles without artwork keep a neat placeholder.' },
+  { kind: 'New', text: 'The borrowing limit is read from your school\'s settings instead of a fixed "3 books", and closed days are skipped when the librarian sets a due date.' },
+  { kind: 'New', text: 'Profile now edits first, middle and last name plus the mobile number, and shows your LRN, academic strand and school.' },
+  { kind: 'Improved', text: 'Notifications use the newer server feed, so cart and request updates arrive correctly, unread dots clear properly, and the owl announces each new event once.' },
+  { kind: 'Improved', text: 'Account menu shows a dot when a new release is available; opening Update Logs clears it.' },
+  { kind: 'Improved', text: 'Registration can prefill the mobile number when the school\'s student record has one.' },
+  { kind: 'Fixed', text: 'A disabled account is now explained on screen and signed out safely instead of failing silently.' }]
+},
+{
   version: '2.2.1',
   date: '2026-11-13',
   title: 'Scanner fix',

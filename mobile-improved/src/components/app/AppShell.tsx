@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { AccountMenu } from './AccountMenu';
 import { AppIcon } from './AppIcon';
@@ -10,16 +10,18 @@ import { NotificationBell } from './notifications/NotificationBell';
 import { NotificationPopup } from './notifications/NotificationPopup';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useAuth } from '../../auth/AuthContext';
 
 export function AppShell() {
   const location = useLocation();
+  const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
+  const { logout } = useAuth();
   const [gameOpen, setGameOpen] = useState(false);
   const closeGame = useCallback(() => setGameOpen(false), []);
   const [bellOpen, setBellOpen] = useState(false);
-  // The bell being open suppresses the pop-up, so it cannot appear behind the
-  // panel and time out unseen.
+  const [signingOut, setSigningOut] = useState(false);
   // The owl pop-up announces arrivals on screen while the app is in use. It is
   // held back only while the bell panel is open, so it cannot appear behind the
   // panel and time out unseen.
@@ -65,7 +67,7 @@ export function AppShell() {
               onDismiss={notifications.dismiss}
               onDismissAll={notifications.dismissAll} />
             
-            <AccountMenu />
+            <AccountMenu hasNewUpdates={notifications.updatesUnseen} />
           </div>
         </header>
 
@@ -93,6 +95,30 @@ export function AppShell() {
       />
 
       {isMobile ? <BookCatchGame open={gameOpen} onClose={closeGame} /> : null}
+
+      {notifications.accountDisabled ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 px-5">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="account-disabled-title" className="w-full max-w-[360px] rounded-2xl bg-white p-5 shadow-card">
+            <h2 id="account-disabled-title" className="text-lg font-extrabold tracking-[-0.02em] text-ink">
+              Account disabled
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-ink/65">
+              {notifications.accountDisabledMessage
+                ?? "Your account has been disabled. Please contact your school's library administrator."}
+            </p>
+            <button
+              type="button"
+              disabled={signingOut}
+              onClick={() => {
+                setSigningOut(true);
+                void logout().finally(() => navigate('/login', { replace: true }));
+              }}
+              className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-ink text-sm font-bold text-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber">
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>);
 
 }

@@ -22,23 +22,23 @@ export const faqs = [
   id: 'borrow',
   question: 'How do I borrow a book?',
   answer:
-  'Find the book in Browse, then bring it to the circulation desk and show your student QR code from the Home screen. The librarian will scan it and the book will show up in Borrowings.'
+  'Find the book in Browse and add it to your Borrow Cart — or scan the QR label on the shelf. Open the Cart tab, check the limit, and send one request. When the librarian releases it, collect the books at the circulation desk with your student QR code from Home. The books then appear in Borrowings.'
 },
 {
   id: 'limit',
   question: 'How many books can I borrow, and for how long?',
-  answer: 'You can borrow up to 3 books at a time. Each loan lasts 7 days unless the librarian says otherwise.'
+  answer: 'Your school sets the limit, and the Borrow Cart shows it together with how many you are already using. The loan period is also set by your school; the due date appears in My Borrowings when the librarian hands the book over.'
 },
 {
   id: 'renew',
   question: 'Can I renew a book?',
-  answer: 'Yes, once per book, as long as no one has reserved it. Bring the book to the desk before its due date to renew.'
+  answer: 'Ask the librarian at the desk before the due date. They can move the due date if the copy is not needed by someone else.'
 },
 {
   id: 'fines',
   question: 'How are overdue fines computed?',
   answer:
-  'Overdue books are charged ₱5 per day per book. Lost or damaged books are charged based on the replacement cost. Fines are paid at the library desk only.'
+  'Overdue books earn a daily fine set by your school. Lost or damaged books are charged based on the replacement cost. Fines are paid at the library desk only, and any unpaid fine stops new borrowing.'
 },
 {
   id: 'lost',

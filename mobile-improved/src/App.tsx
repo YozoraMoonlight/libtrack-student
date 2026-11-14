@@ -4,12 +4,14 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { watchSessionPersistence, hasSavedSessionCookie } from './api/laravel';
 import { consumeLaunchRoute, watchNotificationTaps } from './api/systemNotifications';
 import { LibraryDataProvider } from './api/libraryData';
+import { BorrowCartProvider } from './api/borrowCart';
 import { AppShell } from './components/app/AppShell';
 import { OfflineModal } from './components/app/OfflineModal';
 import { AppIconProvider } from './contexts/AppIconContext';
 import { OutboxSync } from './offline/OutboxSync';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Borrowings } from './pages/Borrowings';
+import { BorrowCart } from './pages/BorrowCart';
 import { BrowseBooks } from './pages/BrowseBooks';
 import { Dashboard } from './pages/Dashboard';
 import { Fines } from './pages/Fines';
@@ -191,6 +193,7 @@ function AuthenticatedApp({ loginSky, finesCleared }: { loginSky: NonNullable<Ap
         <Route path="/app" element={<ProtectedAppShell />}>
           <Route index element={<Dashboard />} />
           <Route path="browse" element={<BrowseBooks />} />
+          <Route path="cart" element={<BorrowCart />} />
           <Route path="borrowings" element={<Borrowings />} />
           <Route path="fines" element={<Fines cleared={finesCleared} />} />
           <Route path="settings" element={<Settings />} />
@@ -216,13 +219,15 @@ export function App({
     <AuthProvider>
       <SessionPersistence />
       <LibraryDataProvider>
-        <AppIconProvider variant={appIcon}>
-          <ThemeProvider>
-            <OutboxSync />
-            <AuthenticatedApp loginSky={loginSky} finesCleared={finesCleared} />
-            <OfflineModal simulateOffline={simulateOffline} />
-          </ThemeProvider>
-        </AppIconProvider>
+        <BorrowCartProvider>
+          <AppIconProvider variant={appIcon}>
+            <ThemeProvider>
+              <OutboxSync />
+              <AuthenticatedApp loginSky={loginSky} finesCleared={finesCleared} />
+              <OfflineModal simulateOffline={simulateOffline} />
+            </ThemeProvider>
+          </AppIconProvider>
+        </BorrowCartProvider>
       </LibraryDataProvider>
     </AuthProvider>
   );

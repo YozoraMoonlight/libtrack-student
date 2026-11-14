@@ -7,4 +7,7 @@ export interface Student {
   schoolCode?: string | null;
   gradeLevel?: string | null;
   section?: string | null;
+  /** Registry contact number, when the school stored one. */
+  phone?: string | null;
+  academicStrand?: string | null;
 }

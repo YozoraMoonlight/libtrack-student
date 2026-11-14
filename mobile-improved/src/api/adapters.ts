@@ -1,7 +1,7 @@
 import type { ActiveLoan, LiveBook, LiveBorrowing, LiveFine } from './laravel';
 import type { Book, Borrowing, Fine } from '../types/library';
 
-export function mapBook(book: LiveBook): Book {
+export function mapBook(book: LiveBook, state?: Book['state']): Book {
   return {
     id: String(book.id),
     title: String(book.title || 'Untitled book'),
@@ -10,6 +10,10 @@ export function mapBook(book: LiveBook): Book {
     isbn: String(book.isbn || ''),
     copies: Number(book.total_copies || 0),
     available: Number(book.available_copies || 0),
+    cover: book.cover_image_url ? String(book.cover_image_url) : null,
+    hasPdf: Boolean(book.has_pdf),
+    location: book.location ? String(book.location) : '',
+    state: state ?? null,
   };
 }
 

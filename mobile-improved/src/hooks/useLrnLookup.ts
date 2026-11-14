@@ -9,12 +9,12 @@ export function useLrnLookup() {
   const [student, setStudent] = useState<Student | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const lookup = useCallback(async (lrn: string) => {
+  const lookup = useCallback(async (lrn: string): Promise<Student | null> => {
     setStatus('loading');
     setError(null);
     try {
       const result = await lookupLrn(lrn);
-      setStudent({
+      const found: Student = {
         lrn: result.lrn,
         name: result.name,
         gradeSection: [result.grade_level, result.section].filter(Boolean).join(' - '),
@@ -22,12 +22,18 @@ export function useLrnLookup() {
         schoolCode: result.school_code,
         gradeLevel: result.grade_level,
         section: result.section,
-      });
+        // Newer registries keep a contact number; older records don't.
+        phone: result.phone ?? null,
+        academicStrand: result.academic_strand ?? null,
+      };
+      setStudent(found);
       setStatus('found');
+      return found;
     } catch (reason: unknown) {
       setStudent(null);
       setStatus('not-found');
       setError(reason instanceof ApiError ? reason.message : 'No active student record matches that LRN.');
+      return null;
     }
   }, []);
 

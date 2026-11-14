@@ -149,32 +149,56 @@ export const articles: Array<{id: string;topic: ArticleTopicId;title: string;sum
     'Open a book to see its details and how many copies are available.']
 
   },
-  { type: 'p', text: 'If a copy is available, visit the library to borrow it. LIBTRACK does not hold books for you — whoever reaches the desk first gets the copy.' },
+  { type: 'p', text: 'Found one? Add it to your Borrow Cart and send the request. The library sets one copy of each title aside for you until the pickup deadline — you do not have to race anyone to the shelf.' },
   { type: 'link', label: 'Browse books', to: '/app/browse' }]
+
+},
+{
+  id: 'borrow-cart',
+  topic: 'borrowing',
+  title: 'Using the Borrow Cart',
+  summary: 'Pick the books you want, send one request, then collect them at the desk.',
+  body: [
+  {
+    type: 'steps',
+    items: [
+    'Open Browse Books and press Add to Borrow Cart on a title — or scan the QR label on the shelf.',
+    'Open the Cart tab to check the list and your school\'s borrowing limit.',
+    'Press Send request to the librarian. One copy of every title is then set aside for you.',
+    'Go to the desk and show your library QR code within the pickup time to collect them.']
+  },
+  {
+    type: 'bullets',
+    items: [
+    'The limit is set by your school and is shown in your Borrow Cart.',
+    'A request can be changed or cancelled until the librarian releases it.',
+    'Requests are handled on the next day the library is open — weekends, holidays and school breaks do not count.',
+    'If a copy runs out before the request is released, you get a notification and one title may be declined.']
+  },
+  { type: 'link', label: 'Open my Borrow Cart', to: '/app/cart' }]
 
 },
 {
   id: 'borrow',
   topic: 'borrowing',
   title: 'How to borrow a book',
-  summary: 'Bring the book and your library QR code to the desk. Up to 3 books at a time.',
+  summary: 'Add it to your Borrow Cart, send the request, then collect it at the desk.',
   body: [
   {
     type: 'steps',
     items: [
-    'Find the book on the shelf (check Browse Books first if you like).',
-    'Bring it to the librarian’s desk and show your library QR code from your Dashboard.',
-    'The librarian scans the QR label on the book and sets the due date.',
+    'Find the book in Browse Books, or scan the QR label on the shelf.',
+    'Add it to your Borrow Cart and send the request.',
+    'Wait for the librarian to release it — your request then says it is waiting at the desk.',
+    'Show your library QR code at the desk. The librarian scans the book and sets the due date.',
     'The book appears in My Borrowings with its due date, and you get a "Book borrowed" notification.']
-
   },
   {
     type: 'bullets',
     items: [
-    'You can have up to 3 books out at a time.',
+    'Your school sets how many books you can have at a time; the Borrow Cart shows the limit and how many you are using.',
     'Only one copy of the same title at a time.',
     'You can’t borrow while you have an unpaid fine or a credential hold.']
-
   }]
 
 },
@@ -205,21 +229,22 @@ export const articles: Array<{id: string;topic: ArticleTopicId;title: string;sum
   summary: 'See every due date in My Borrowings. A reminder is texted on the day a book is due.',
   body: [
   { type: 'p', text: 'Each book in My Borrowings shows its due date, and your Dashboard lists what is due soon.' },
+  { type: 'p', text: 'Your school sets the loan length. If a due date would land on a day the library is closed — a weekend, holiday, or school break — it moves to the next open day.' },
   { type: 'p', text: 'On the morning a book is due, LIBTRACK texts a reminder to the mobile number on your account.' },
   { type: 'p', text: 'If the librarian changes a due date, you get a notification with the new date.' },
-  { type: 'warning', text: 'A book not returned by its due date becomes overdue and earns a fine of ₱5.00 for every day late.' }]
+  { type: 'warning', text: 'A book not returned by its due date becomes overdue and earns a daily fine set by your school.' }]
 
 },
 {
   id: 'fines',
   topic: 'fines',
   title: 'How fines work',
-  summary: '₱5.00 for every day a book is overdue. Pay at the library.',
+  summary: 'A daily late fine set by your school. Pay at the library.',
   body: [
   {
     type: 'bullets',
     items: [
-    'Overdue: ₱5.00 for each day late, updated every morning until the book is returned.',
+    'Overdue: a daily fine for each day late, updated every morning until the book is returned. Your school sets the amount.',
     'Lost or damaged books: the librarian adds a fine for the book.']
 
   },
@@ -232,12 +257,11 @@ export const articles: Array<{id: string;topic: ArticleTopicId;title: string;sum
   id: 'holds',
   topic: 'fines',
   title: 'Credential holds',
-  summary: 'A hold stops borrowing until your fines or overdue books are cleared.',
+  summary: 'A hold stops borrowing until you settle it with the library.',
   body: [
-  { type: 'p', text: 'A credential hold means the library has flagged your account until something is settled. It is placed automatically when:' },
-  { type: 'bullets', items: ['your unpaid fines reach ₱50.00, or', 'a book is overdue by more than 14 days.'] },
-  { type: 'p', text: 'The librarian can also place a hold, for example for an unpaid fine. You get a notification either way, with the reason.' },
-  { type: 'p', text: 'While on hold you can’t borrow books. Pay the fines or return the books and the hold is released — you get a "hold released" notification.' }]
+  { type: 'p', text: 'A credential hold is a flag the library places on your account. While it is active you cannot borrow books, even if you have room under your limit.' },
+  { type: 'p', text: 'A librarian places it, for example for an unreturned book, an unresolved obligation, or a disciplinary case. The reason is shown in your notifications.' },
+  { type: 'p', text: 'An unpaid fine also stops borrowing on its own. Pay it at the library and the block is lifted. For a credential hold, ask the librarian to clear it — you get a notification when it is released.' }]
 
 },
 {
@@ -280,8 +304,8 @@ export const productDemos = [
   to: '/demos/borrow',
   steps: [
   'Search for the book in Browse and check that a copy is available.',
-  'Note its shelf location and pick it up.',
-  'Show your QR code from Home at the circulation desk.',
+  'Add it to your Borrow Cart, then open the Cart tab and send the request.',
+  'Wait for the librarian to release it, then collect it at the desk with your QR code.',
   'The book appears in Borrowings with its due date.']
 
 },
@@ -433,8 +457,10 @@ export const startGuides: StartGuide[] = [
   {
     heading: 'Borrow',
     items: [
-    'Find the book in Browse Books, then bring it and your QR code to the librarian.',
-    'Up to 3 books at a time, one copy per title.',
+    'Find the book in Browse Books and add it to your Borrow Cart (or scan its shelf label).',
+    'Open the Cart tab, check your school’s limit, then send one request.',
+    'When the librarian releases it, collect the books at the desk and show your QR code.',
+    'The number of books you can have at a time is set by your school and shown in your Borrow Cart.',
     'Not possible while you have an unpaid fine or a credential hold.']
 
   },
@@ -449,8 +475,8 @@ export const startGuides: StartGuide[] = [
     heading: 'Due dates and fines',
     items: [
     'A reminder is texted on the morning a book is due.',
-    'Overdue books: ₱5.00 per day. Pay at the library.',
-    'Unpaid fines of ₱50.00 or a book 14 days overdue put a hold on borrowing.']
+    'Overdue books earn a daily fine set by your school. Pay at the library.',
+    'Any unpaid fine stops borrowing until it is settled. A credential hold also stops borrowing until the librarian clears it.']
 
   },
   {
@@ -474,7 +500,7 @@ export const startGuides: StartGuide[] = [
     heading: 'Before you borrow',
     items: [
     'I have no unpaid fines and no credential hold.',
-    'I have fewer than 3 books out.',
+    'I have room under the borrowing limit shown in my Borrow Cart.',
     'My Dashboard (library QR code) is open on my phone.']
 
   },
@@ -493,7 +519,7 @@ export const startGuides: StartGuide[] = [
   {
     heading: 'If something goes wrong',
     items: [
-    'Late: ₱5.00 per day until the librarian receives the book.',
+    'Late: a daily fine set by my school until the librarian receives the book.',
     'Lost or damaged: tell the librarian right away.',
     'Forgot my password: "Forgot password?" on the sign-in page.']
 

@@ -9,6 +9,13 @@ export interface Book {
   isbn: string;
   copies: number;
   available: number;
+  /** Server-resolved cover URL (`/book-covers/{file}`). Never rebuild it. */
+  cover?: string | null;
+  /** True when the title can also be read as a PDF. */
+  hasPdf?: boolean;
+  location?: string;
+  /** Where this title already is for the signed-in student. */
+  state?: 'cart' | 'reserved' | 'borrowed' | null;
 }
 
 export interface NightShelfBook extends Book {

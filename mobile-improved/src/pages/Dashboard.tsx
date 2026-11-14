@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, CalendarCheckIcon, ExpandIcon } from 'lucide-react';
+import { ArrowRightIcon, CalendarCheckIcon, ExpandIcon, ShoppingCartIcon } from 'lucide-react';
 import { BottomSheet } from '../components/app/BottomSheet';
 import { LibraryQr } from '../components/app/LibraryQr';
 import { StatusBadge } from '../components/app/StatusBadge';
 import { useAuth } from '../auth/AuthContext';
+import { useBorrowCart } from '../api/borrowCart';
 import type { LiveTransaction } from '../api/laravel';
 import type { Borrowing } from '../types/library';
 import { formatPeso, formatShortDate } from '../utils/format';
@@ -12,6 +13,7 @@ import { formatPeso, formatShortDate } from '../utils/format';
 export function Dashboard() {
   const [qrOpen, setQrOpen] = useState(false);
   const { user, dashboard, refreshSession } = useAuth();
+  const { count: cartCount, pending } = useBorrowCart();
 
   if (!dashboard || !user) {
     return (
@@ -75,6 +77,31 @@ export function Dashboard() {
           </dd>
         </Link>
       </dl>
+
+      {user.academic_strand || schoolName ? (
+        <p className="mt-2 px-1 text-[13px] text-ink/50">
+          {[user.academic_strand, schoolName].filter(Boolean).join(' · ')}
+        </p>
+      ) : null}
+
+      <Link
+        to="/app/cart"
+        className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-ink/[0.06] transition-colors duration-150 active:bg-ink/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cream text-brand-ember">
+          <ShoppingCartIcon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-ink">Borrow Cart</span>
+          <span className="mt-0.5 block truncate text-[13px] text-ink/55">
+            {pending
+              ? 'A request is waiting at the desk'
+              : cartCount > 0
+                ? `${cartCount} ${cartCount === 1 ? 'book' : 'books'} ready to request`
+                : 'Pick books and send one request'}
+          </span>
+        </span>
+        <ArrowRightIcon className="h-4 w-4 shrink-0 text-ink/30" aria-hidden="true" />
+      </Link>
 
       <section className="mt-7" aria-labelledby="due-heading">
         <h2 id="due-heading" className="text-base font-bold tracking-[-0.02em] text-ink">

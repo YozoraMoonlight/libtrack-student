@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChangeKindBadge } from '../components/app/ChangeKindBadge';
 import { PageHeader } from '../components/app/PageHeader';
 import { StatusBadge } from '../components/app/StatusBadge';
 import { ShelfStackGame } from '../components/app/shelfStack/ShelfStackGame';
+import { SYSTEM_UPDATES_SEEN_EVENT, getSystemUpdates, markSystemUpdatesSeen } from '../api/laravel';
 import { updateLogs } from '../data/updateLogs';
 import { formatDate } from '../utils/format';
 import { cn } from '../utils/cn';
@@ -12,7 +13,33 @@ const TAP_WINDOW_MS = 1500;
 
 export function UpdateLogs() {
   const [gameOpen, setGameOpen] = useState(false);
+  const [unseenRelease, setUnseenRelease] = useState<string | null>(null);
   const taps = useRef<number[]>([]);
+
+  /**
+   * The bell feed carries a server-side "unseen release" flag. Reading the
+   * release notes clears it, so the dot in the account menu disappears and a
+   * second visit does not claim there is something new.
+   */
+  useEffect(() => {
+    let active = true;
+
+    getSystemUpdates()
+      .then((data) => {
+        if (!active) return;
+        const latest = data.releases[0]?.version ?? null;
+        if (latest && data.seen !== latest) setUnseenRelease(latest);
+        return markSystemUpdatesSeen();
+      })
+      .then(() => {
+        if (active) window.dispatchEvent(new Event(SYSTEM_UPDATES_SEEN_EVENT));
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Secret: tap the very first version (where it all began) 5 times quickly
   function handleOriginTap() {
@@ -58,6 +85,7 @@ export function UpdateLogs() {
                   v{log.version}
                 </h2>
                 {isLatest ? <StatusBadge label="Latest" tone="success" /> : null}
+                {unseenRelease === log.version ? <StatusBadge label="New" tone="warning" /> : null}
                 <time dateTime={log.date} className="text-xs text-ink/45">
                   {formatDate(log.date)}
                 </time>

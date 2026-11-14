@@ -19,7 +19,9 @@ export function StudentIdentityCard({ student, onChange }: StudentIdentityCardPr
       <div className="min-w-0 flex-1">
         <p className="sr-only">Student record verified:</p>
         <p className="truncate text-[16px] font-extrabold tracking-[-0.01em] text-ink">{student.name}</p>
-        <p className="truncate text-[13px] font-semibold text-ink/55">{student.gradeSection}</p>
+        <p className="truncate text-[13px] font-semibold text-ink/55">
+          {[student.gradeSection, student.academicStrand].filter(Boolean).join(' · ')}
+        </p>
       </div>
       <button
         type="button"

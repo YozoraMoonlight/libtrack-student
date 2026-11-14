@@ -42,7 +42,7 @@ export function isConnectionError(error: unknown): boolean {
   return error instanceof TypeError || (error instanceof ApiError && error.status === 0);
 }
 
-type InertiaPage<T = Record<string, unknown>> = {
+export type InertiaPage<T = Record<string, unknown>> = {
   component: string;
   props: T;
   url: string;
@@ -57,6 +57,16 @@ export type StudentUser = {
   lrn?: string | null;
   school_id?: number | null;
   school_name?: string | null;
+  /** Newer accounts split the name; older ones only have `name`. */
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  /** Replaces the old `department` column. */
+  academic_strand?: string | null;
+  phone?: string | null;
+  qr_code?: string | null;
+  user_role?: string | null;
+  is_active?: boolean | null;
   [key: string]: unknown;
 };
 
@@ -100,17 +110,32 @@ export type LiveBook = {
   title?: string | null;
   author?: string | null;
   isbn?: string | null;
+  location?: string | null;
   total_copies?: number | null;
   available_copies?: number | null;
   status?: string | null;
+  cover_image?: string | null;
+  /** Resolved by the server through the /book-covers route. Never rebuild it. */
+  cover_image_url?: string | null;
+  has_pdf?: boolean | null;
+  pdf_url?: string | null;
+  pdf_size?: number | null;
   category?: { id?: number; name?: string | null } | null;
   [key: string]: unknown;
+};
+
+export type BookStates = {
+  cart?: Array<number | string>;
+  reserved?: Array<number | string>;
+  borrowed?: Array<number | string>;
 };
 
 export type BooksProps = {
   books: Paginated<LiveBook>;
   categories: Array<{ id: number | string; name: string }>;
   filters?: { search?: string | null; category_id?: string | null; status?: string | null };
+  /** Which titles are in the cart, set aside, or already borrowed. */
+  bookStates?: BookStates;
 };
 
 export type LiveBorrowing = {
@@ -159,18 +184,45 @@ export type LiveFine = {
 
 export type LiveNotification = {
   id: number | string;
+  /** New feed field (`account.disabled`, `borrow_request.released`, ...) */
+  kind?: string | null;
   type?: string | null;
   title?: string | null;
   message?: string | null;
   body?: string | null;
   channel?: string | null;
+  tone?: string | null;
   actor?: string | null;
+  /** New feed field: the server's read flag. */
+  read?: boolean | null;
   is_read?: boolean | number | null;
   read_at?: string | null;
+  popped_at?: string | null;
   sent_at?: string | null;
   created_at?: string | null;
   data?: Record<string, unknown> | null;
   [key: string]: unknown;
+};
+
+export type SystemRelease = {
+  version: string;
+  date: string;
+  title: string;
+  changes: Array<{ type: string; text: string }>;
+};
+
+export type NotificationFeed = {
+  account: { active: boolean; message?: string | null };
+  unread_count: number;
+  items: LiveNotification[];
+  has_more: boolean;
+  page: number;
+  /** Notifications the server handed out exactly once for the owl to announce. */
+  popups: LiveNotification[];
+  updates: {
+    latest: { version: string; date: string; title: string } | null;
+    unseen: boolean;
+  } | null;
 };
 
 /** The feed is served either as a bare list or wrapped in `notifications`/`data`. */
@@ -189,11 +241,42 @@ function notificationList(body: unknown): LiveNotification[] {
   return [];
 }
 
-export async function getNotifications(): Promise<LiveNotification[]> {
-  const body = await request<unknown>('/notifications/feed', {
+export async function getNotificationFeed(page = 1): Promise<NotificationFeed> {
+  const query = page > 1 ? `?page=${page}` : '';
+  const body = await request<unknown>(`/notifications/feed${query}`, {
     headers: { Accept: 'application/json' },
   });
-  return notificationList(body);
+
+  if (Array.isArray(body)) {
+    return {
+      account: { active: true },
+      unread_count: 0,
+      items: body as LiveNotification[],
+      has_more: false,
+      page,
+      popups: [],
+      updates: null,
+    };
+  }
+
+  const record = (body ?? {}) as Record<string, unknown>;
+  const account = record.account as { active?: boolean; message?: string | null } | undefined;
+  const updates = record.updates as NotificationFeed['updates'];
+
+  return {
+    account: { active: account?.active !== false, message: account?.message ?? null },
+    unread_count: Number(record.unread_count ?? 0),
+    items: notificationList(record),
+    has_more: Boolean(record.has_more),
+    page: Number(record.page ?? page),
+    popups: Array.isArray(record.popups) ? (record.popups as LiveNotification[]) : [],
+    updates: updates ?? null,
+  };
+}
+
+/** Kept for callers that only need the list. */
+export async function getNotifications(): Promise<LiveNotification[]> {
+  return (await getNotificationFeed()).items;
 }
 
 export async function markNotificationRead(notificationId: number | string): Promise<void> {
@@ -211,6 +294,25 @@ export async function markAllNotificationsRead(): Promise<void> {
     body: JSON.stringify({}),
   });
 }
+
+export async function getSystemUpdates(): Promise<{ releases: SystemRelease[]; seen: string | null }> {
+  const body = await request<{ releases?: SystemRelease[]; seen?: string | null }>('/system-updates', {
+    headers: { Accept: 'application/json' },
+  });
+  return { releases: Array.isArray(body?.releases) ? body.releases : [], seen: body?.seen ?? null };
+}
+
+/** Opening What's New clears the server-side unread dot. */
+export async function markSystemUpdatesSeen(): Promise<void> {
+  await request('/system-updates/seen', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+}
+
+/** Fired locally so the account menu can clear its dot without a re-fetch. */
+export const SYSTEM_UPDATES_SEEN_EVENT = 'libtrack:system-updates-seen';
 
 /* -------------------------------------------------------- forgot password */
 
@@ -364,9 +466,11 @@ function errorsFromBody(body: unknown): Record<string, string[]> {
 
 function messageFromBody(body: unknown, fallback: string): string {
   if (typeof body === 'object' && body !== null) {
-    const record = body as { message?: unknown; reason?: unknown };
+    const record = body as { message?: unknown; reason?: unknown; error?: unknown };
     if (typeof record.message === 'string' && record.message) return record.message;
     if (typeof record.reason === 'string' && record.reason) return record.reason;
+    // The cart QR lookup answers 422 with `{ error: "…" }`.
+    if (typeof record.error === 'string' && record.error) return record.error;
   }
 
   return fallback;
@@ -707,6 +811,122 @@ export async function inertiaPage<T = Record<string, unknown>>(
   return page;
 }
 
+/**
+ * Record `/path` as Laravel's "previous URL".
+ *
+ * `back()` is what the cart and settings controllers use to send their flash
+ * message after a write. Laravel only remembers the previous URL for a
+ * non-AJAX GET, and every read this app makes is marked as AJAX, so without
+ * this priming the redirect would point at the login page and the message
+ * would be thrown away.
+ *
+ * Deliberately no `X-Requested-With`: that is the flag Laravel checks.
+ */
+async function primePreviousUrl(path: string): Promise<void> {
+  try {
+    const current = await ensureLaravelSession();
+    const headers = new Headers({
+      Accept: 'text/html, application/xhtml+xml',
+      'X-Inertia': 'true',
+    });
+    if (current.inertiaVersion) headers.set('X-Inertia-Version', current.inertiaVersion);
+    await fetchWithStatus(url(path), { method: 'GET', headers, credentials: 'include' });
+  } catch {
+    // The write can still succeed; only its flash message would be lost.
+  }
+}
+
+export type InertiaVisitOptions = {
+  method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  /** Form fields (default) or a JSON object when `json` is true. */
+  data?: Record<string, string | number | boolean | null | undefined>;
+  json?: boolean;
+  /** The app page the controller should return to, e.g. `/borrow-cart`. */
+  referrer?: string;
+};
+
+/**
+ * Submit an Inertia write (add to cart, submit request, save profile).
+ *
+ * Returns the page the controller redirected to, including its `flash` prop,
+ * or null when the server answered with something that is not an Inertia page.
+ * Validation errors still arrive as normal 422 JSON and are thrown as
+ * {@link ApiError}, so the forms behave exactly as before.
+ */
+export async function inertiaVisit<T = Record<string, unknown>>(
+  path: string,
+  options: InertiaVisitOptions = {},
+): Promise<InertiaPage<T> | null> {
+  if (options.referrer) await primePreviousUrl(options.referrer);
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const current = await ensureLaravelSession();
+    const headers = new Headers({
+      Accept: 'text/html, application/xhtml+xml',
+      'X-Inertia': 'true',
+      'X-Requested-With': 'XMLHttpRequest',
+    });
+    if (current.csrfToken) headers.set('X-CSRF-TOKEN', current.csrfToken);
+    if (current.inertiaVersion) headers.set('X-Inertia-Version', current.inertiaVersion);
+
+    let body: BodyInit | undefined;
+    if (options.data) {
+      if (options.json) {
+        headers.set('Content-Type', 'application/json');
+        body = JSON.stringify(options.data);
+      } else {
+        headers.set('Content-Type', 'application/x-www-form-urlencoded;charset=UTF-8');
+        const fields: Record<string, string> = {};
+        for (const [key, value] of Object.entries(options.data)) {
+          if (value !== null && value !== undefined) fields[key] = String(value);
+        }
+        body = formBody(fields);
+      }
+    }
+
+    const response = await fetchWithStatus(url(path), {
+      method: options.method ?? 'POST',
+      headers,
+      body,
+      credentials: 'include',
+    });
+
+    if (response.status === 419 && attempt === 0) {
+      clearSessionCache();
+      continue;
+    }
+
+    // A stale Inertia version answers 409; re-bootstrap and try once more so a
+    // deployment rollout does not fail the write the student just tapped.
+    if ((response.status === 409 || response.status === 412) && attempt === 0) {
+      clearSessionCache();
+      continue;
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    const raw = contentType.includes('application/json') ? await response.json() : await response.text();
+
+    if (response.status === 401 || landedOnLogin(response, path)) {
+      throw new SessionExpiredError(response.url || path);
+    }
+
+    if (!response.ok) {
+      throw new ApiError(
+        messageFromBody(raw, 'The LIBTRACK request failed.'),
+        response.status,
+        errorsFromBody(raw),
+        response.url,
+      );
+    }
+
+    if (typeof raw === 'string') return extractInertiaPage<T>(raw);
+    if (raw && typeof raw === 'object' && 'component' in raw) return raw as InertiaPage<T>;
+    return null;
+  }
+
+  throw new ApiError('The LIBTRACK request could not be completed.', 419, {}, url(path));
+}
+
 export async function getDashboard(): Promise<InertiaPage<DashboardProps>> {
   return inertiaPage<DashboardProps>('/student/dashboard', 0, ['user', 'stats']);
 }
@@ -760,6 +980,9 @@ export type RegistrationLookup = {
   school_code: string | null;
   grade_level: string | null;
   section: string | null;
+  /** Present once the LRN registry stores a contact number. */
+  phone?: string | null;
+  academic_strand?: string | null;
 };
 
 export type RegistrationInitiation = {
@@ -858,12 +1081,65 @@ export async function requestReturn(payload: { transaction_id?: number; scanned_
   });
 }
 
-export async function updateProfile(name: string): Promise<{ ok: boolean; name: string }> {
-  return request<{ ok: boolean; name: string }>('/user/settings/profile', {
+/* ------------------------------------------------------------- own profile */
+
+export type ProfileValues = {
+  name: string;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  role: string;
+};
+
+export type ProfileProps = {
+  user: ProfileValues;
+  flash?: { success?: string | null; error?: string | null; info?: string | null; id?: string | null };
+};
+
+/**
+ * The Settings page's own copies of the name parts.
+ *
+ * The dashboard only carries the display name, so the profile form reads this
+ * first: splitting "Maria Clara Santos" back into first/middle/last in the app
+ * would guess, and the server already knows.
+ */
+export async function getProfile(): Promise<InertiaPage<ProfileProps>> {
+  return inertiaPage<ProfileProps>('/user/settings', 0, ['user']);
+}
+
+export type ProfileUpdate = {
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  email: string;
+  phone: string;
+};
+
+export async function updateProfile(values: ProfileUpdate): Promise<{ ok: boolean; name: string }> {
+  const page = await inertiaVisit<ProfileProps>('/user/settings/profile', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ name }),
+    json: true,
+    data: {
+      first_name: values.first_name,
+      middle_name: values.middle_name ?? '',
+      last_name: values.last_name,
+      email: values.email,
+      phone: values.phone,
+    },
+    referrer: '/user/settings',
   });
+
+  const flash = page?.props?.flash;
+  if (flash?.error) throw new ApiError(flash.error, 422);
+
+  const name = page?.props?.user?.name
+    ?? [values.first_name, values.middle_name, values.last_name].filter(Boolean).join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return { ok: true, name };
 }
 
 export async function updatePassword(payload: {
@@ -875,6 +1151,29 @@ export async function updatePassword(payload: {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(payload),
+  });
+}
+
+/* --------------------------------------------------------------- borrow cart */
+
+export type BorrowCartScan = {
+  book: {
+    id: number | string;
+    title?: string | null;
+    author?: string | null;
+    location?: string | null;
+    cover_image_url?: string | null;
+    available_copies?: number | null;
+    has_pdf?: boolean | null;
+    state?: 'borrowed' | 'reserved' | 'cart' | null;
+  };
+  copy: { id: number | string; label: string; available: boolean } | null;
+};
+
+/** What a scanned shelf label is, before it is put in the cart. */
+export async function lookupBorrowCartQr(qr: string): Promise<BorrowCartScan> {
+  return request<BorrowCartScan>(`/borrow-cart/lookup?qr=${encodeURIComponent(qr)}`, {
+    headers: { Accept: 'application/json' },
   });
 }
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  getNotifications,
+  SYSTEM_UPDATES_SEEN_EVENT,
+  getNotificationFeed,
   markAllNotificationsRead,
   markNotificationRead,
   type LiveNotification,
@@ -14,10 +15,13 @@ import type { AppNotification, NotificationKind } from '../types/notifications';
 /**
  * Header bell backed by `GET notifications/feed`.
  *
- * The shape is intentionally defensive: the feed may answer as a bare array or
- * wrapped in `notifications`/`data`, and the read flag may arrive as a boolean or
- * as `read_at`. Marking read is optimistic — the badge updates immediately and
- * the request follows, because a tap should never feel slow.
+ * The newer feed is authoritative: every borrow, return, fine and cart event
+ * is stored server-side, together with its read flag and the pop-ups the owl
+ * has not announced yet. The old circulation-derived list is kept only as a
+ * fallback for an unreachable feed, otherwise every event would appear twice.
+ *
+ * The shape stays defensive: if a deployment answers with an older payload the
+ * read flag may still arrive as `read`, `is_read` or `read_at`.
  */
 
 const KIND_BY_TYPE: Record<string, NotificationKind> = {
@@ -31,6 +35,21 @@ const KIND_BY_TYPE: Record<string, NotificationKind> = {
   return: 'return',
   fine: 'fine',
   hold: 'hold',
+  'cart.out_of_copies': 'hold',
+  'borrow_request.submitted': 'hold',
+  'borrow_request.released': 'borrow',
+  'borrow_request.declined': 'hold',
+  'borrow_request.expired': 'hold',
+  'loan.borrowed': 'borrow',
+  'loan.returned': 'return',
+  'book.borrowed': 'borrow',
+  'book.returned': 'return',
+  'fine.added': 'fine',
+  'fine.settled': 'fine',
+  'fine.paid': 'fine',
+  'account.disabled': 'account',
+  'account.details_changed': 'account',
+  'account.password_changed': 'account',
 };
 
 /**
@@ -88,6 +107,15 @@ const SEEN_KEY = 'libtrack:seen-notifications:v1';
 const POPUP_DELAY_MS = 900;
 const POPUP_VISIBLE_MS = 6000;
 
+/**
+ * The bell is the only place new events appear, so it has to be polled.
+ *
+ * 12s is deliberately slower than the 3s circulation poll: that one keeps the
+ * screens live, this one only has to find new records, and the server hands
+ * out each pop-up exactly once.
+ */
+const FEED_POLL_MS = 12_000;
+
 function readSet(key: string): Set<string> {
   if (typeof window === 'undefined') return new Set();
   try {
@@ -111,10 +139,19 @@ function writeSet(key: string, ids: Set<string>): void {
 }
 
 function kindOf(type: string | null | undefined): NotificationKind {
-  return KIND_BY_TYPE[String(type ?? '').toLowerCase()] ?? 'account';
+  const key = String(type ?? '').toLowerCase();
+  if (KIND_BY_TYPE[key]) return KIND_BY_TYPE[key];
+  if (key.startsWith('fine')) return 'fine';
+  if (key.startsWith('cart')) return 'hold';
+  if (key.startsWith('borrow_request')) return 'hold';
+  if (key.includes('return')) return 'return';
+  if (key.startsWith('loan') || key.startsWith('book')) return 'borrow';
+  return 'account';
 }
 
 function isRead(row: LiveNotification): boolean {
+  // The v2 feed sends an explicit boolean; older rows only had a timestamp.
+  if (typeof row.read === 'boolean') return row.read;
   if (typeof row.is_read === 'boolean') return row.is_read;
   if (typeof row.is_read === 'number') return row.is_read === 1;
   return Boolean(row.read_at);
@@ -127,11 +164,11 @@ function mapNotification(row: LiveNotification): AppNotification | null {
 
   return {
     id: `feed:${row.id}`,
-    kind: kindOf(row.type as string | null),
+    kind: kindOf(row.kind ?? row.type),
     title: String(row.title ?? 'LIBTRACK'),
     body: String(row.message ?? row.body ?? row.description ?? ''),
     actor: String(row.actor ?? 'LIBTRACK Library'),
-    time: String(row.sent_at ?? row.created_at ?? ''),
+    time: String(row.created_at ?? row.sent_at ?? ''),
     unread: !isRead(row),
   };
 }
@@ -139,10 +176,9 @@ function mapNotification(row: LiveNotification): AppNotification | null {
 /**
  * Notifications for the header bell.
  *
- * Two sources are merged. The server feed only ever carries `due_reminder` and
- * `overdue_notice` (and currently 500s), so borrows, returns and settled fines
- * are derived from the same borrowings/fines payloads the screens already load.
- * Derived ids are stable, so nothing duplicates across reloads.
+ * The v2 server feed carries every event (borrow, return, fine, cart, account)
+ * together with its read flag. The circulation-derived list is only used when
+ * the feed cannot be reached, so an event never appears twice.
  */
 export function useNotifications(enabled = true, suppressPopup = false) {
   const { user } = useAuth();
@@ -152,6 +188,10 @@ export function useNotifications(enabled = true, suppressPopup = false) {
   const [seen, setSeen] = useState<Set<string>>(() => readSet(SEEN_KEY));
   const [popup, setPopup] = useState<AppNotification | null>(null);
   const [loading, setLoading] = useState(false);
+  const [updatesUnseen, setUpdatesUnseen] = useState(false);
+  const [accountDisabled, setAccountDisabled] = useState(false);
+  const [accountDisabledMessage, setAccountDisabledMessage] = useState<string | null>(null);
+  const [feedAvailable, setFeedAvailable] = useState(false);
 
   // Shared with the Borrowings and Fines screens, so a librarian action lands
   // everywhere at once instead of only inside the bell.
@@ -159,6 +199,15 @@ export function useNotifications(enabled = true, suppressPopup = false) {
 
   // Which account the "already announced" baseline was taken for.
   const baselinedFor = useRef<number | string | null>(null);
+
+  /**
+   * Ids the server has just handed out for the owl to announce.
+   *
+   * They are exempt from the first-run baseline: the server claims each pop-up
+   * exactly once, so if the baseline swallowed them they would never be shown.
+   */
+  const claimedPopups = useRef<Set<string>>(new Set());
+  const loadedOnce = useRef(false);
   const accountId = user?.id ?? null;
 
   const derived = useMemo<ActivityEvent[]>(() => {
@@ -171,6 +220,19 @@ export function useNotifications(enabled = true, suppressPopup = false) {
   }, [enabled, borrowings.data, fines.data]);
 
   const merged = useMemo<AppNotification[]>(() => {
+    // The newer server feed records every event, so merging the derived list on
+    // top would show each borrow/return/fine twice. Derived items are only a
+    // fallback for when the feed could not be read at all.
+    if (feedAvailable) {
+      return serverItems
+        .map((item) => (read.has(item.id) ? { ...item, unread: false } : item))
+        .sort((a, b) => {
+          const left = a.time ? new Date(a.time).getTime() : 0;
+          const right = b.time ? new Date(b.time).getTime() : 0;
+          return (Number.isNaN(right) ? 0 : right) - (Number.isNaN(left) ? 0 : left);
+        });
+    }
+
     const byId = new Map<string, AppNotification>();
 
     for (const item of derived) byId.set(item.id, item);
@@ -183,7 +245,7 @@ export function useNotifications(enabled = true, suppressPopup = false) {
         const right = b.time ? new Date(b.time).getTime() : 0;
         return (Number.isNaN(right) ? 0 : right) - (Number.isNaN(left) ? 0 : left);
       });
-  }, [derived, serverItems, read]);
+  }, [derived, serverItems, read, feedAvailable]);
 
   const items = useMemo(() => merged.filter((item) => !dismissed.has(item.id)), [merged, dismissed]);
 
@@ -206,6 +268,8 @@ export function useNotifications(enabled = true, suppressPopup = false) {
       const next = new Set(current);
       let changed = false;
       items.forEach((item) => {
+        // A claimed pop-up is meant to be announced, even on the first run.
+        if (claimedPopups.current.has(item.id)) return;
         if (!next.has(item.id)) {
           next.add(item.id);
           changed = true;
@@ -321,7 +385,7 @@ export function useNotifications(enabled = true, suppressPopup = false) {
     showPopup(pending[0] ?? null);
   }, [items, pending, showPopup, postArrivals]);
 
-  // Held in a ref so the 3s poll does not re-trigger the announce. Depending on
+  // Held in a ref so the 12s poll does not re-trigger the announce. Depending on
   // the callback itself re-ran it every tick, which immediately re-announced
   // with an empty queue and slammed the popup shut.
   const announceRef = useRef(announceNext);
@@ -372,13 +436,37 @@ export function useNotifications(enabled = true, suppressPopup = false) {
 
   const load = useCallback(async () => {
     if (!enabled) return;
-    setLoading(true);
+    if (!loadedOnce.current) setLoading(true);
     try {
-      const rows = await getNotifications();
-      setServerItems(rows.map(mapNotification).filter((item): item is AppNotification => item !== null));
+      const feed = await getNotificationFeed();
+      setServerItems(feed.items.map(mapNotification).filter((item): item is AppNotification => item !== null));
+      setFeedAvailable(true);
+      setUpdatesUnseen(Boolean(feed.updates?.unseen));
+      setAccountDisabled(feed.account.active === false);
+      setAccountDisabledMessage(feed.account.message ?? null);
+
+      // The server marks these as handed out, so let the owl announce them even
+      // though an earlier poll may already have put them in the list.
+      //
+      // Not on the very first poll: the server hands out historical rows too,
+      // and the baseline below exists precisely so a fresh install does not
+      // replay everything ever sent. Once the baseline is taken, a claim really
+      // is new.
+      const claimed = feed.popups.map((row) => `feed:${row.id}`);
+      if (claimed.length && baselinedFor.current === accountId) {
+        claimedPopups.current = new Set(claimed);
+        setSeen((current) => {
+          const next = new Set(current);
+          let changed = false;
+          for (const id of claimed) if (next.delete(id)) changed = true;
+          if (changed) writeSet(SEEN_KEY, next);
+          return changed ? next : current;
+        });
+      }
     } catch {
       // The feed is not reachable; the derived events still fill the bell.
     } finally {
+      loadedOnce.current = true;
       setLoading(false);
     }
   }, [enabled]);
@@ -386,27 +474,40 @@ export function useNotifications(enabled = true, suppressPopup = false) {
   useEffect(() => {
     if (!enabled) {
       setServerItems([]);
+      setFeedAvailable(false);
+      setUpdatesUnseen(false);
+      setAccountDisabled(false);
       return;
     }
-    void load();
-  }, [enabled, load]);
 
-  // Coming back to the app is a strong signal something may have changed.
-  // The shared provider already refreshes circulation data; only the server feed
-  // needs nudging here.
-  useEffect(() => {
-    if (!enabled) return;
+    void load();
+
+    // New events are only visible here, so keep asking while the app is in
+    // front. The circulation poll does not know about the notification table.
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void load();
+    }, FEED_POLL_MS);
+
+    // Coming back to the app is a strong signal something may have changed.
     const onVisible = () => {
-      if (document.visibilityState !== 'visible') return;
-      void load();
+      if (document.visibilityState === 'visible') void load();
     };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', onVisible);
+
     return () => {
+      window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('online', onVisible);
     };
   }, [enabled, load]);
+
+  // Opening What's New dispatches this, so the dot clears immediately.
+  useEffect(() => {
+    const onSeen = () => setUpdatesUnseen(false);
+    window.addEventListener(SYSTEM_UPDATES_SEEN_EVENT, onSeen);
+    return () => window.removeEventListener(SYSTEM_UPDATES_SEEN_EVENT, onSeen);
+  }, []);
 
   const unreadCount = items.filter((item) => item.unread).length;
 
@@ -472,5 +573,10 @@ export function useNotifications(enabled = true, suppressPopup = false) {
     openPopup,
     loading,
     refresh: load,
+    /** "What's New" has a release this student has not opened yet. */
+    updatesUnseen,
+    /** The server disabled this account while it was signed in. */
+    accountDisabled,
+    accountDisabledMessage,
   };
 }
