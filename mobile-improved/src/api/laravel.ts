@@ -967,6 +967,22 @@ export async function getBookQr(bookId: string | number): Promise<string> {
   });
 }
 
+export type BookReadProps = {
+  book: {
+    id: number | string;
+    title: string;
+    author?: string | null;
+    pdf_url: string;
+    pdf_size?: number | null;
+    available_copies?: number | null;
+  };
+  bookStates?: BookStates;
+};
+
+export async function getBookRead(bookId: string | number): Promise<InertiaPage<BookReadProps>> {
+  return inertiaPage<BookReadProps>(`/books/${bookId}/read`, 0, ['book']);
+}
+
 export async function getFines(): Promise<InertiaPage<FinesProps>> {
   return inertiaPage<FinesProps>('/my-fines', 0, ['fines']);
 }

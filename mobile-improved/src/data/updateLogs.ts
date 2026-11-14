@@ -7,6 +7,16 @@ export const updateLogs: Array<{
   changes: Array<{kind: ChangeKind;text: string;}>;
 }> = [
 {
+  version: '2.4.0',
+  date: '2026-11-14',
+  title: 'Read PDFs in the app',
+  changes: [
+  { kind: 'New', text: 'Books that have a PDF can now be read inside the app. Open a title in Browse and tap “Read PDF”.' },
+  { kind: 'New', text: 'The PDF reader lets you move between pages and zoom in, so you can read comfortably on your phone.' },
+  { kind: 'Improved', text: 'Reading a PDF is not a loan — it does not count against your limit, and there is no due date or fine.' },
+  { kind: 'Improved', text: 'If you decide you need the printed copy, you can add the physical book to your Borrow Cart from the reader.' }]
+},
+{
   version: '2.3.0',
   date: '2026-11-14',
   title: 'Borrow Cart, book covers and notification upgrades',

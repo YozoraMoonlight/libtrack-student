@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScanLineIcon, SearchIcon, SearchXIcon, ShoppingCartIcon, XIcon } from 'lucide-react';
+import { BookOpenIcon, ScanLineIcon, SearchIcon, SearchXIcon, ShoppingCartIcon, XIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BookCard } from '../components/app/BookCard';
 import { BookCover } from '../components/app/BookCover';
@@ -350,52 +350,62 @@ export function BrowseBooks() {
               null}
             </dl>
 
-            {selected.state === 'cart' ?
-            <Link
-              to="/app/cart"
-              className="mt-5 flex h-12 items-center justify-center gap-2 rounded-xl bg-ink text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber">
-              <ShoppingCartIcon className="h-4 w-4" aria-hidden="true" />
-              Open my Borrow Cart
-            </Link> :
-            selected.state === 'reserved' ?
-            <p className="mt-5 rounded-xl bg-cream px-3 py-3 text-center text-[13px] leading-5 text-brand-ember">
-              This title is already set aside for you. Collect it at the desk.
-            </p> :
-            selected.state === 'borrowed' ?
-            <p className="mt-5 rounded-xl bg-ink/[0.04] px-3 py-3 text-center text-[13px] leading-5 text-ink/60">
-              You already have this book on loan. Return it before borrowing another copy.
-            </p> :
-            <>
-                {selected.hasPdf ?
-              <label className="mt-4 flex items-start gap-2.5 rounded-xl bg-sky-50 px-3 py-3 text-[13px] leading-5 text-sky-900 ring-1 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-200">
+            {selected.hasPdf ? (
+              <Link
+                to={`/app/books/${selected.id}/read`}
+                onClick={() => setSheetOpen(false)}
+                className="mt-5 flex h-12 items-center justify-center gap-2 rounded-xl bg-ink text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber">
+                <BookOpenIcon className="h-4 w-4" aria-hidden="true" />
+                Read PDF
+              </Link>
+            ) : null}
+
+            {selected.state === 'cart' ? (
+              <Link
+                to="/app/cart"
+                className={cn('flex h-12 items-center justify-center gap-2 rounded-xl bg-white text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber', selected.hasPdf ? 'mt-2' : 'mt-5')}>
+                <ShoppingCartIcon className="h-4 w-4" aria-hidden="true" />
+                Open my Borrow Cart
+              </Link>
+            ) : selected.state === 'reserved' ? (
+              <p className={cn('rounded-xl bg-cream px-3 py-3 text-center text-[13px] leading-5 text-brand-ember', selected.hasPdf ? 'mt-2' : 'mt-5')}>
+                This title is already set aside for you. Collect it at the desk.
+              </p>
+            ) : selected.state === 'borrowed' ? (
+              <p className={cn('rounded-xl bg-ink/[0.04] px-3 py-3 text-center text-[13px] leading-5 text-ink/60', selected.hasPdf ? 'mt-2' : 'mt-5')}>
+                You already have this book on loan. Return it before borrowing another copy.
+              </p>
+            ) : (
+              <>
+                {selected.hasPdf ? (
+                  <label className="mt-3 flex items-start gap-2.5 rounded-xl bg-sky-50 px-3 py-3 text-[13px] leading-5 text-sky-900 ring-1 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-200">
                     <input
-                  type="checkbox"
-                  checked={wantsPhysical}
-                  onChange={(event) => setWantsPhysical(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-sky-600" />
-                  
+                      type="checkbox"
+                      checked={wantsPhysical}
+                      onChange={(event) => setWantsPhysical(event.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-sky-600" />
                     <span>This title also has a PDF. I want the physical copy, not just the online version.</span>
-                  </label> :
-              null}
+                  </label>
+                ) : null}
                 <button
-                type="button"
-                disabled={adding || selected.available <= 0 || (selected.hasPdf && !wantsPhysical)}
-                onClick={() => void handleAdd(selected)}
-                className={cn(
-                  'mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber',
-                  adding || selected.available <= 0 || (selected.hasPdf && !wantsPhysical)
-                    ? 'bg-ink/10 text-ink/35'
-                    : 'bg-brand-amber text-[#121212] active:bg-brand-amberDark',
-                )}>
-                
+                  type="button"
+                  disabled={adding || selected.available <= 0 || (selected.hasPdf && !wantsPhysical)}
+                  onClick={() => void handleAdd(selected)}
+                  className={cn(
+                    'flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber',
+                    selected.hasPdf ? 'mt-3' : 'mt-5',
+                    adding || selected.available <= 0 || (selected.hasPdf && !wantsPhysical)
+                      ? 'bg-ink/10 text-ink/35'
+                      : 'bg-brand-amber text-[#121212] active:bg-brand-amberDark',
+                  )}>
                   <ShoppingCartIcon className="h-4 w-4" aria-hidden="true" />
-                  {adding ? 'Adding…' : selected.available <= 0 ? 'No copy on the shelf' : 'Add to Borrow Cart'}
+                  {adding ? 'Adding…' : selected.available <= 0 ? 'No copy on the shelf' : 'Add physical copy to Borrow Cart'}
                 </button>
-                {actionError ?
-              <p className="mt-2 text-center text-xs text-red-700 dark:text-red-300">{actionError}</p> :
-              null}
+                {actionError ? (
+                  <p className="mt-2 text-center text-xs text-red-700 dark:text-red-300">{actionError}</p>
+                ) : null}
               </>
-            }
+            )}
 
             <div className="mt-6">
               <p className="text-sm font-bold text-ink">Book QR</p>
@@ -430,12 +440,22 @@ export function BrowseBooks() {
               </div>
             </div>
 
+            {scanned.book.has_pdf ? (
+              <Link
+                to={`/app/books/${scanned.book.id}/read`}
+                onClick={() => setScanSheetOpen(false)}
+                className="mt-4 flex h-11 items-center justify-center gap-2 rounded-xl bg-ink text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber">
+                <BookOpenIcon className="h-4 w-4" aria-hidden="true" />
+                Read PDF
+              </Link>
+            ) : null}
+
             {scanned.book.state === 'cart' ?
-            <p className="mt-4 rounded-xl bg-cream px-3 py-3 text-center text-[13px] text-brand-ember">This title is already in your cart.</p> :
+            <p className={cn('rounded-xl bg-cream px-3 py-3 text-center text-[13px] text-brand-ember', scanned.book.has_pdf ? 'mt-2' : 'mt-4')}>This title is already in your cart.</p> :
             scanned.book.state === 'reserved' ?
-            <p className="mt-4 rounded-xl bg-cream px-3 py-3 text-center text-[13px] text-brand-ember">This title is already set aside for you.</p> :
+            <p className={cn('rounded-xl bg-cream px-3 py-3 text-center text-[13px] text-brand-ember', scanned.book.has_pdf ? 'mt-2' : 'mt-4')}>This title is already set aside for you.</p> :
             scanned.book.state === 'borrowed' ?
-            <p className="mt-4 rounded-xl bg-ink/[0.04] px-3 py-3 text-center text-[13px] text-ink/60">You already have this book on loan.</p> :
+            <p className={cn('rounded-xl bg-ink/[0.04] px-3 py-3 text-center text-[13px] text-ink/60', scanned.book.has_pdf ? 'mt-2' : 'mt-4')}>You already have this book on loan.</p> :
             <>
                 {scanned.copy && !scanned.copy.available ?
               <p className="mt-4 rounded-xl bg-amber-50 px-3 py-3 text-center text-[13px] text-amber-900 ring-1 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-200">

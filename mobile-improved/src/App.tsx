@@ -21,6 +21,7 @@ import { UpdateLogs } from './pages/UpdateLogs';
 import { RestoringScreen } from './components/auth/RestoringScreen';
 import { Login } from './pages/Login';
 import { NightShelf } from './pages/NightShelf';
+import { ReadBook } from './pages/ReadBook';
 import { Register } from './pages/Register';
 import { Settings } from './pages/Settings';
 import { StartGuide } from './pages/StartGuide';
@@ -193,6 +194,7 @@ function AuthenticatedApp({ loginSky, finesCleared }: { loginSky: NonNullable<Ap
         <Route path="/app" element={<ProtectedAppShell />}>
           <Route index element={<Dashboard />} />
           <Route path="browse" element={<BrowseBooks />} />
+          <Route path="books/:id/read" element={<ReadBook />} />
           <Route path="cart" element={<BorrowCart />} />
           <Route path="borrowings" element={<Borrowings />} />
           <Route path="fines" element={<Fines cleared={finesCleared} />} />

@@ -24,8 +24,8 @@ android {
         // versionCode must only ever go up. Android refuses an update whose
         // code is not higher than the installed one, and refuses to install it
         // at all if the signing key differs - so never reuse or lower this.
-        versionCode 5
-        versionName "2.3.0"
+        versionCode 6
+        versionName "2.4.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
