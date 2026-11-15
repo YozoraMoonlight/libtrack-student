@@ -1,35 +1,39 @@
-# LIBTRACK Mobile-Improved Frontend
+# LIBTRACK Student App (mobile-improved)
 
-Standalone React/Vite student frontend for the existing LIBTRACK Laravel
-backend. The existing web UI is not modified.
+React + TypeScript + Vite front end for the LIBTRACK student mobile app. It is bundled
+into the Android app with Capacitor (`webDir: mobile-improved/dist`) and talks to the
+existing Laravel/Inertia backend over HTTPS (session + CSRF), not a separate JSON API.
+
+See the repository root [`README.md`](../README.md) for the full app overview, features,
+build/signing steps, and troubleshooting.
 
 ## Run locally
 
-```powershell
+```bash
 npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal. The development server proxies the
-Laravel routes to `https://libtrack.laravel.cloud`, forwards the Laravel
-session cookies, and rewrites redirects back to the Vite origin.
+Open the Vite URL shown in the terminal.
 
-Copy `.env.example` to `.env` only if the proxy target needs to change:
+- `VITE_API_ORIGIN` stays blank for local development so requests go through the Vite
+  proxy.
+- `LIBTRACK_LARAVEL_ORIGIN` sets the backend origin the dev proxy targets.
+- Copy `.env.example` to `.env` if you need to change the proxy target.
 
-```env
-VITE_API_ORIGIN=
-LIBTRACK_LARAVEL_ORIGIN=https://libtrack.laravel.cloud
+## Build
+
+```bash
+npm run build
 ```
 
-`VITE_API_ORIGIN` stays blank for the local proxy. The backend is not deployed
-or modified by this frontend.
+This runs the mock-data guard and produces `dist/`, which Capacitor syncs into the
+Android project (`cap sync android` from the repo root).
 
-## Current integration status
+## Notes
 
-- Phase 0: boundaries and live route contract recorded
-- Phase 1: frontend baseline builds successfully
-- Phase 2: Laravel CSRF/session client and local development proxy connected
-- Phase 3: authenticated dashboard shell and student data surfaces connected
-- Phase 4: LRN lookup and OTP registration flow connected
-- Phase 5: books, borrowings, fines, settings, return requests, and QR scanning connected
-- Phase 6: 24-hour local data cache, API-aware offline modal, and return-request outbox connected
+- Production API origin is configured in `.env.production` and consumed by
+  `src/api/laravel.ts`.
+- Main areas: `src/pages` (screens), `src/api` (Laravel/Inertia client, cart,
+  notifications), `src/components` (UI, PDF reader, QR scanner), `src/offline`
+  (session/cache/outbox), `src/data` (help content, update logs).
