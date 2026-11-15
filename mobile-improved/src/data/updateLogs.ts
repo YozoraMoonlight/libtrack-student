@@ -7,6 +7,16 @@ export const updateLogs: Array<{
   changes: Array<{kind: ChangeKind;text: string;}>;
 }> = [
 {
+  version: '2.4.1',
+  date: '2026-11-15',
+  title: 'Find and open PDF books faster',
+  changes: [
+  { kind: 'New', text: 'Browse now shows a “PDF” marker on books that can be read in the app.' },
+  { kind: 'New', text: 'A “PDF only” filter in Browse shows just the books that have a PDF.' },
+  { kind: 'New', text: 'Borrowing history now has a “Read PDF” button for titles that have a PDF, so you can open them from My Borrowings.' },
+  { kind: 'Improved', text: 'Reading a PDF is still separate from borrowing and can’t be downloaded or printed by students.' }]
+},
+{
   version: '2.4.0',
   date: '2026-11-14',
   title: 'Read PDFs in the app',

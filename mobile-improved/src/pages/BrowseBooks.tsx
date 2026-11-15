@@ -23,6 +23,7 @@ export function BrowseBooks() {
   const [submittedSearch, setSubmittedSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [categoryId, setCategoryId] = useState<string | undefined>();
+  const [pdfOnly, setPdfOnly] = useState(false);
   const [selected, setSelected] = useState<Book | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedQr, setSelectedQr] = useState<string | null>(null);
@@ -43,7 +44,8 @@ export function BrowseBooks() {
   const remote = useRemotePage(() => getBooks({
     search: submittedSearch,
     categoryId,
-  }), user ? `books:${user.id}:${submittedSearch}:${categoryId || 'all'}` : null);
+    pdf: pdfOnly,
+  }), user ? `books:${user.id}:${submittedSearch}:${categoryId || 'all'}:${pdfOnly ? 'pdf' : 'all'}` : null);
 
   const results = useMemo(() => {
     const pageStates = remote.data?.props?.bookStates;
@@ -117,6 +119,11 @@ export function BrowseBooks() {
     const match = remote.data?.props?.categories?.find((item) => item.name === next);
     setCategory(next);
     setCategoryId(match?.id == null ? undefined : String(match.id));
+    remote.refresh();
+  }
+
+  function togglePdfOnly() {
+    setPdfOnly((value) => !value);
     remote.refresh();
   }
 
@@ -247,7 +254,18 @@ export function BrowseBooks() {
           ) : null}
         </div>
 
-        <div className="mt-3 flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filter by category">
+        <div className="mt-3 flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filter books">
+          <button
+            type="button"
+            aria-pressed={pdfOnly}
+            onClick={togglePdfOnly}
+            className={cn(
+              'h-9 shrink-0 whitespace-nowrap rounded-full px-4 text-[13px] font-semibold transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber',
+              pdfOnly ? 'bg-sky-600 text-white ring-1 ring-sky-600' : 'bg-white text-sky-700 ring-1 ring-sky-600/30 active:bg-sky-50 dark:text-sky-300',
+            )}
+          >
+            PDF only
+          </button>
           {categories.map((item) => {
             const activeCategory = item === category;
             return (
@@ -297,6 +315,7 @@ export function BrowseBooks() {
                 setSubmittedSearch('');
                 setCategory('All');
                 setCategoryId(undefined);
+                setPdfOnly(false);
                 remote.refresh();
               }}
               className="mt-4 h-10 rounded-lg px-4 text-sm font-bold text-brand-ember hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber"

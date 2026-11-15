@@ -32,12 +32,15 @@ export interface NightShelfBook extends Book {
 
 export interface Borrowing {
   id: string;
+  bookId?: string | null;
   bookTitle: string;
   borrowed: string;
   due: string;
   returned: string | null;
   status: BorrowStatus;
   fine: number | null;
+  /** True when the borrowed title can be read as a PDF in the app. */
+  hasPdf?: boolean;
   /** Live: set once the student has asked the librarian to take the book back. */
   returnRequestedAt?: string | null;
   returnRequestedMethod?: string | null;

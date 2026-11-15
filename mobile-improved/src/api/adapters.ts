@@ -27,12 +27,14 @@ export function mapBorrowing(transaction: LiveBorrowing): Borrowing {
 
   return {
     id: String(transaction.id),
+    bookId: transaction.book?.id != null ? String(transaction.book.id) : null,
     bookTitle: String(transaction.book?.title || 'Unknown book'),
     borrowed: transaction.borrowed_at || '',
     due: transaction.due_date || '',
     returned: transaction.returned_at || null,
     status: statusLabel,
     fine,
+    hasPdf: Boolean(transaction.book?.has_pdf),
     returnRequestedAt: transaction.return_requested_at ?? null,
     returnRequestedMethod: transaction.return_requested_method ?? null,
   };

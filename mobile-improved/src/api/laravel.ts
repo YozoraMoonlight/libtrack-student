@@ -931,10 +931,11 @@ export async function getDashboard(): Promise<InertiaPage<DashboardProps>> {
   return inertiaPage<DashboardProps>('/student/dashboard', 0, ['user', 'stats']);
 }
 
-export async function getBooks(options: { search?: string; categoryId?: string; page?: number } = {}): Promise<InertiaPage<BooksProps>> {
+export async function getBooks(options: { search?: string; categoryId?: string; pdf?: boolean; page?: number } = {}): Promise<InertiaPage<BooksProps>> {
   const params = new URLSearchParams();
   if (options.search?.trim()) params.set('search', options.search.trim());
   if (options.categoryId) params.set('category_id', options.categoryId);
+  if (options.pdf) params.set('pdf', '1');
   if (options.page && options.page > 1) params.set('page', String(options.page));
   const query = params.toString();
   return inertiaPage<BooksProps>(`/books${query ? `?${query}` : ''}`, 0, ['books']);

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CameraIcon, Loader2Icon, QrCodeIcon, Undo2Icon } from 'lucide-react';
+import { BookOpenIcon, CameraIcon, Loader2Icon, QrCodeIcon, Undo2Icon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { BottomSheet } from '../components/app/BottomSheet';
 import { PullToRefresh } from '../components/app/PullToRefresh';
 import { QrScanner } from '../components/app/QrScanner';
@@ -201,6 +202,14 @@ export function Borrowings() {
                     </div>
                   </dl>
                   {item.fine ? <p className="mt-2.5 text-xs font-semibold text-red-600 dark:text-red-400">Late fine {formatPeso(item.fine)}</p> : null}
+                  {item.hasPdf && item.bookId ? (
+                    <Link
+                      to={`/app/books/${item.bookId}/read`}
+                      className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg bg-sky-50 px-3 text-[13px] font-bold text-sky-700 ring-1 ring-sky-600/20 active:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber dark:bg-sky-500/10 dark:text-sky-300">
+                      <BookOpenIcon className="h-4 w-4" aria-hidden="true" />
+                      Read PDF
+                    </Link>
+                  ) : null}
                 </li>
               ))}
             </ul>
