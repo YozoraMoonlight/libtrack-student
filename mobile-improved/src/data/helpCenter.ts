@@ -170,7 +170,7 @@ export const articles: Array<{id: string;topic: ArticleTopicId;title: string;sum
   {
     type: 'bullets',
     items: [
-    'The limit is set by your school and is shown in your Borrow Cart.',
+    'Your school may set a borrowing limit, or there may be no limit; the Borrow Cart shows this.',
     'A request can be changed or cancelled until the librarian releases it.',
     'Requests are handled on the next day the library is open — weekends, holidays and school breaks do not count.',
     'If a copy runs out before the request is released, you get a notification and one title may be declined.']
@@ -196,7 +196,7 @@ export const articles: Array<{id: string;topic: ArticleTopicId;title: string;sum
   {
     type: 'bullets',
     items: [
-    'Your school sets how many books you can have at a time; the Borrow Cart shows the limit and how many you are using.',
+    'Your school may set how many books you can have at a time, or there may be no limit; the Borrow Cart shows your limit and how many you are using.',
     'Only one copy of the same title at a time.',
     'You can’t borrow while you have an unpaid fine or a credential hold.']
   }]
@@ -458,9 +458,9 @@ export const startGuides: StartGuide[] = [
     heading: 'Borrow',
     items: [
     'Find the book in Browse Books and add it to your Borrow Cart (or scan its shelf label).',
-    'Open the Cart tab, check your school’s limit, then send one request.',
+    'Open the Cart tab, check your borrowing limit (if your school has one), then send one request.',
     'When the librarian releases it, collect the books at the desk and show your QR code.',
-    'The number of books you can have at a time is set by your school and shown in your Borrow Cart.',
+    'Your school may set how many books you can have at a time, or there may be no limit. The Borrow Cart shows this.',
     'Not possible while you have an unpaid fine or a credential hold.']
 
   },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { HourglassIcon, QrCodeIcon, HandIcon } from 'lucide-react';
-import { formatShortDate } from '../../utils/format';
+import { dueCountdown, formatShortDate } from '../../utils/format';
 import type { Borrowing } from '../../types/library';
 
 interface ReturnRequestsProps {
@@ -56,6 +56,12 @@ export function ReturnRequests({ requests }: ReturnRequestsProps) {
                       </p>
                       <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-ink/50">
                         <span>Due {item.due ? formatShortDate(item.due) : '—'}</span>
+                        {item.due && dueCountdown(item.due) ? (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span>{dueCountdown(item.due)}</span>
+                          </>
+                        ) : null}
                         <span aria-hidden="true">·</span>
                         <span className="inline-flex items-center gap-1">
                           <Icon className="h-3 w-3" aria-hidden="true" />

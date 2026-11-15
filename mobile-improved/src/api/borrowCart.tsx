@@ -53,8 +53,8 @@ export type BorrowRequestSummary = {
 };
 
 export type BorrowCartSlate = {
-  /** The school's per-student limit. */
-  max: number;
+  /** The school's per-student limit, or null when there is no limit. */
+  max: number | null;
   /** Books currently out on loan. */
   loans: number;
   /** Books set aside by a request waiting at the desk. */

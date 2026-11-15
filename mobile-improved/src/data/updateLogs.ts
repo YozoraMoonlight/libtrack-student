@@ -7,6 +7,15 @@ export const updateLogs: Array<{
   changes: Array<{kind: ChangeKind;text: string;}>;
 }> = [
 {
+  version: '2.4.2',
+  date: '2026-11-15',
+  title: 'Due-date countdowns and borrowing limit updates',
+  changes: [
+  { kind: 'New', text: 'Books with a due date now show how much time is left — for example “3 days left”, “Due today”, or “Overdue by 2 days” — in Upcoming due dates, Recent activity, and My Borrowings.' },
+  { kind: 'Improved', text: 'When your school has no borrowing limit, the Borrow Cart now clearly says “No borrowing limit”.' },
+  { kind: 'Improved', text: 'Help answers now explain that your school may set a borrowing limit or have no limit, and the Borrow Cart shows this.' }]
+},
+{
   version: '2.4.1',
   date: '2026-11-15',
   title: 'Find and open PDF books faster',

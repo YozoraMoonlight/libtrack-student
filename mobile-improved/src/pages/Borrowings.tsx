@@ -13,7 +13,7 @@ import { mapActiveLoan, mapBorrowing } from '../api/adapters';
 import { useLibraryData } from '../api/libraryData';
 import { useAuth } from '../auth/AuthContext';
 import { enqueueReturn, pendingReturnCount } from '../offline/outbox';
-import { formatDate, formatPeso, formatShortDate } from '../utils/format';
+import { dueCountdown, formatDate, formatPeso, formatShortDate } from '../utils/format';
 import { sounds } from '../utils/sound';
 import type { Borrowing } from '../types/library';
 
@@ -135,7 +135,10 @@ export function Borrowings() {
                       <div className="flex items-center justify-between gap-3 py-3">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-ink">{item.bookTitle}</p>
-                          <p className="text-xs text-ink/50">Due {item.due ? formatShortDate(item.due) : '—'}</p>
+                          <p className="text-xs text-ink/50">
+                            Due {item.due ? formatShortDate(item.due) : '—'}
+                            {item.due && dueCountdown(item.due) ? ` · ${dueCountdown(item.due)}` : ''}
+                          </p>
                         </div>
 
                         <button
@@ -194,7 +197,12 @@ export function Borrowings() {
                     </div>
                     <div>
                       <dt className="text-ink/45">Due</dt>
-                      <dd className="mt-0.5 font-medium text-ink/80">{item.due ? formatDate(item.due) : '—'}</dd>
+                      <dd className="mt-0.5 font-medium text-ink/80">
+                        {item.due ? formatDate(item.due) : '—'}
+                        {item.status !== 'Returned' && item.due && dueCountdown(item.due) ? (
+                          <span className="mt-0.5 block text-[11px] font-semibold text-ink/55">{dueCountdown(item.due)}</span>
+                        ) : null}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-ink/45">Returned</dt>

@@ -8,7 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useBorrowCart } from '../api/borrowCart';
 import type { LiveTransaction } from '../api/laravel';
 import type { Borrowing } from '../types/library';
-import { formatPeso, formatShortDate } from '../utils/format';
+import { dueCountdown, formatPeso, formatShortDate } from '../utils/format';
 
 export function Dashboard() {
   const [qrOpen, setQrOpen] = useState(false);
@@ -109,12 +109,18 @@ export function Dashboard() {
         </h2>
         {active.length ?
         <ul className="mt-3 divide-y divide-ink/[0.07] rounded-2xl bg-white ring-1 ring-ink/[0.06]">
-            {active.map((item) =>
-          <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
-                <p className="truncate text-sm font-semibold text-ink">{item.bookTitle}</p>
-                <span className="shrink-0 text-sm text-ink/60">Due {item.due ? formatShortDate(item.due) : '—'}</span>
-              </li>
-          )}
+            {active.map((item) => {
+              const left = dueCountdown(item.due);
+              return (
+                <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+                  <p className="truncate text-sm font-semibold text-ink">{item.bookTitle}</p>
+                  <span className="shrink-0 text-right text-sm text-ink/60">
+                    Due {item.due ? formatShortDate(item.due) : '—'}
+                    {left ? <span className="block text-xs font-medium text-ink/50">{left}</span> : null}
+                  </span>
+                </li>
+              );
+            })}
           </ul> :
 
         <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white px-4 py-4 ring-1 ring-ink/[0.06]">
@@ -139,17 +145,21 @@ export function Dashboard() {
         </div>
         {recent.length ? (
           <ul className="mt-2 divide-y divide-ink/[0.07] rounded-2xl bg-white ring-1 ring-ink/[0.06]">
-            {recent.map((item) =>
-              <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-ink">{item.bookTitle}</p>
-                  <p className="mt-0.5 text-xs text-ink/50">
-                    {item.borrowed ? formatShortDate(item.borrowed) : 'Date unavailable'} – due {item.due ? formatShortDate(item.due) : '—'}
-                  </p>
-                </div>
-                <StatusBadge label={item.status} tone={item.status === 'Returned' ? 'success' : item.status === 'Overdue' ? 'danger' : 'warning'} />
-              </li>
-            )}
+            {recent.map((item) => {
+              const left = item.status !== 'Returned' ? dueCountdown(item.due) : null;
+              return (
+                <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink">{item.bookTitle}</p>
+                    <p className="mt-0.5 text-xs text-ink/50">
+                      {item.borrowed ? formatShortDate(item.borrowed) : 'Date unavailable'} – due {item.due ? formatShortDate(item.due) : '—'}
+                      {left ? ` · ${left}` : ''}
+                    </p>
+                  </div>
+                  <StatusBadge label={item.status} tone={item.status === 'Returned' ? 'success' : item.status === 'Overdue' ? 'danger' : 'warning'} />
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <div className="mt-3 rounded-2xl bg-white px-4 py-4 text-sm text-ink/60 ring-1 ring-ink/[0.06]">

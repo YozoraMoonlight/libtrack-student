@@ -176,7 +176,7 @@ export function BorrowCart() {
               <p className="mt-0.5 text-[13px] text-ink/55">
                 {max > 0
                   ? `${used} of ${max} ${max === 1 ? 'book' : 'books'} in use`
-                  : 'Your school has not set a limit yet.'}
+                  : 'No borrowing limit.'}
               </p>
             </div>
             <span

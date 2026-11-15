@@ -27,7 +27,7 @@ export const faqs = [
 {
   id: 'limit',
   question: 'How many books can I borrow, and for how long?',
-  answer: 'Your school sets the limit, and the Borrow Cart shows it together with how many you are already using. The loan period is also set by your school; the due date appears in My Borrowings when the librarian hands the book over.'
+  answer: 'Your school may set a borrowing limit, or there may be no limit. The Borrow Cart shows your limit (or that there is no limit) together with how many you are already using. The loan period is also set by your school; the due date appears in My Borrowings when the librarian hands the book over.'
 },
 {
   id: 'renew',
