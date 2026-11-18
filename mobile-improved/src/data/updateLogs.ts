@@ -7,6 +7,13 @@ export const updateLogs: Array<{
   changes: Array<{kind: ChangeKind;text: string;}>;
 }> = [
 {
+  version: '2.4.3',
+  date: '2026-11-18',
+  title: 'Backend connection update',
+  changes: [
+  { kind: 'Improved', text: 'Updated the app to connect to the library’s new server address, so sign-in and library features keep working.' }]
+},
+{
   version: '2.4.2',
   date: '2026-11-15',
   title: 'Due-date countdowns and borrowing limit updates',
