@@ -7,6 +7,14 @@ export const updateLogs: Array<{
   changes: Array<{kind: ChangeKind;text: string;}>;
 }> = [
 {
+  version: '2.4.4',
+  date: '2026-11-21',
+  title: 'Local server URL config (LAN test build)',
+  changes: [
+  { kind: 'New', text: 'You can set a local/LAN server URL from the “Change server URL” button (shown when the app cannot connect, and in the account menu/login). Useful for testing with a local server like http://homer:8000.' },
+  { kind: 'Improved', text: 'This is a separate LAN/test build; reset to default to use the normal online server.' }]
+},
+{
   version: '2.4.3',
   date: '2026-11-18',
   title: 'Backend connection update',

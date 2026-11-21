@@ -1,4 +1,4 @@
-import { setApiOnline } from '../offline/connection';
+﻿import { setApiOnline } from '../offline/connection';
 import {
   clearSavedSessionCookies,
   hasSavedSession,
@@ -6,8 +6,8 @@ import {
   restoreSessionCookies,
   watchForBackgroundPersist,
 } from '../offline/sessionCookies';
-
-const DEFAULT_ORIGIN = '';
+import { clearOfflineData } from '../offline/storage';
+import { getServerUrl } from './serverConfig';
 
 /** Upper bound on the sign-in self-heal, so a slow restore cannot pin the UI. */
 const RECOVERY_TIMEOUT_MS = 4000;
@@ -15,7 +15,8 @@ const RECOVERY_TIMEOUT_MS = 4000;
 /** Write-and-verify rounds before a cold-start recovery is declared a failure. */
 const RECOVERY_ATTEMPTS = 3;
 
-export const API_ORIGIN = (import.meta.env.VITE_API_ORIGIN ?? DEFAULT_ORIGIN).replace(/\/$/, '');
+/** Runtime-configurable server origin (defaults to build-time VITE_API_ORIGIN). */
+export const getApiOrigin = (): string => getServerUrl();
 
 export class ApiError extends Error {
   status: number;
@@ -409,7 +410,8 @@ let session: SessionState = {
 let bootstrapPromise: Promise<SessionState> | null = null;
 
 function url(path: string): string {
-  return `${API_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
+  const origin = getApiOrigin();
+  return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 function extractCsrfToken(html: string): string | null {
@@ -469,7 +471,7 @@ function messageFromBody(body: unknown, fallback: string): string {
     const record = body as { message?: unknown; reason?: unknown; error?: unknown };
     if (typeof record.message === 'string' && record.message) return record.message;
     if (typeof record.reason === 'string' && record.reason) return record.reason;
-    // The cart QR lookup answers 422 with `{ error: "…" }`.
+    // The cart QR lookup answers 422 with `{ error: "â€¦" }`.
     if (typeof record.error === 'string' && record.error) return record.error;
   }
 
@@ -556,7 +558,7 @@ function clearSessionCache(): void {
  * the cookies back, because `setCookie` resolves before it commits.
  */
 async function bootSession(): Promise<SessionState> {
-  await restoreSessionCookies(API_ORIGIN);
+  await restoreSessionCookies(getApiOrigin());
   return establishSession();
 }
 
@@ -569,6 +571,17 @@ async function bootSession(): Promise<SessionState> {
  */
 export function hasSavedSessionCookie(): boolean {
   return hasSavedSession();
+}
+
+/**
+ * Apply a runtime server URL change: drop old session/cache state so the next
+ * request goes to the new server cleanly. Caller should reload the app.
+ */
+export async function applyServerUrlChange(): Promise<void> {
+  session = { csrfToken: null, inertiaVersion: null };
+  bootstrapPromise = null;
+  clearSavedSessionCookies();
+  clearOfflineData();
 }
 
 export function ensureLaravelSession(): Promise<SessionState> {
@@ -600,7 +613,7 @@ export async function recoverExpiredSession(): Promise<boolean> {
   // because deleting is the one operation that cannot be trusted: it resolves
   // before Android commits, so it can erase a session that was working.
   for (let attempt = 0; attempt < RECOVERY_ATTEMPTS; attempt += 1) {
-    if (!(await restoreSessionCookies(API_ORIGIN))) continue;
+    if (!(await restoreSessionCookies(getApiOrigin()))) continue;
 
     try {
       // Hard bound. This runs inside the sign-in path, so a slow restore must
@@ -641,7 +654,7 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
  * teardown function for hot reload.
  */
 export function watchSessionPersistence(): () => void {
-  return watchForBackgroundPersist(API_ORIGIN);
+  return watchForBackgroundPersist(getApiOrigin());
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -715,7 +728,7 @@ export async function loginWithLaravel(identifier: string, password: string): Pr
   }
 
   // Snapshot the session cookie so the next cold start can restore it.
-  await persistSessionCookies(API_ORIGIN);
+  await persistSessionCookies(getApiOrigin());
 }
 
 /**

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { LoaderCircleIcon, WifiOffIcon } from 'lucide-react';
 import { isApiOnline, retryRemoteData, subscribeConnection } from '../../offline/connection';
 import { probeConnection } from '../../api/laravel';
+import { ServerUrlDialog } from '../auth/ServerUrlDialog';
 
 interface OfflineModalProps {
   simulateOffline?: boolean;
@@ -19,6 +20,7 @@ export function OfflineModal({ simulateOffline = false }: OfflineModalProps) {
   const [checking, setChecking] = useState(false);
   const [stillOffline, setStillOffline] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [serverUrlOpen, setServerUrlOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const offline = !apiOnline || simulateOffline;
 
@@ -93,7 +95,9 @@ export function OfflineModal({ simulateOffline = false }: OfflineModalProps) {
           {checking ? 'Checking…' : 'Try again'}
         </button>
         <button type="button" onClick={() => setDismissed(true)} className="mt-2 h-11 w-full rounded-xl text-sm font-semibold text-ink/55">Continue with saved data</button>
+        <button type="button" onClick={() => setServerUrlOpen(true)} className="mt-1 h-11 w-full rounded-xl text-sm font-semibold text-brand-ember">Change server URL</button>
       </div>
+      <ServerUrlDialog open={serverUrlOpen} onClose={() => setServerUrlOpen(false)} />
     </div>,
     document.body,
   );

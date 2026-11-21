@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpenIcon } from 'lucide-react';
-import { API_ORIGIN } from '../../api/laravel';
+import { getApiOrigin } from '../../api/laravel';
 import { cn } from '../../utils/cn';
 
 interface BookCoverProps {
@@ -19,7 +19,7 @@ export function resolveCoverUrl(src?: string | null): string | null {
   if (/^(https?:|data:|blob:)/i.test(value)) return value;
 
   const path = value.startsWith('/') ? value : `/${value}`;
-  return `${API_ORIGIN}${path}`;
+  return `${getApiOrigin()}${path}`;
 }
 
 /**

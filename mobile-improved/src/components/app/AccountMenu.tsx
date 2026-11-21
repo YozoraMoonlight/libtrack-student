@@ -1,13 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDownIcon, LifeBuoyIcon, LogOutIcon, MoonIcon, SettingsIcon, SparklesIcon } from 'lucide-react';
+import { ChevronDownIcon, LifeBuoyIcon, LogOutIcon, MoonIcon, ServerIcon, SettingsIcon, SparklesIcon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../auth/AuthContext';
+import { ServerUrlDialog } from '../auth/ServerUrlDialog';
 import { cn } from '../../utils/cn';
 
 export function AccountMenu({ hasNewUpdates = false }: { hasNewUpdates?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [serverUrlOpen, setServerUrlOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -143,6 +145,14 @@ export function AccountMenu({ hasNewUpdates = false }: { hasNewUpdates?: boolean
                 <span className="h-2 w-2 rounded-full bg-brand-ember" aria-label="New release" /> :
                 null}
               </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setOpen(false); setServerUrlOpen(true); }}
+                className="flex h-11 w-full items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-ink transition-colors duration-150 hover:bg-ink/[0.04] focus-visible:bg-ink/[0.04] focus-visible:outline-none">
+                <ServerIcon className="h-[18px] w-[18px] text-ink/55" aria-hidden="true" />
+                <span className="flex-1 text-left">Server URL</span>
+              </button>
             </div>
             <div className="border-t border-ink/[0.07] p-1.5">
               <button
@@ -158,6 +168,7 @@ export function AccountMenu({ hasNewUpdates = false }: { hasNewUpdates?: boolean
           </motion.div> :
         null}
       </AnimatePresence>
+      <ServerUrlDialog open={serverUrlOpen} onClose={() => setServerUrlOpen(false)} />
     </div>);
 
 }

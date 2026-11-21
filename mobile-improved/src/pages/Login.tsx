@@ -7,6 +7,7 @@ import { DeathNotePage, type DeathNoteTrigger } from '../components/auth/DeathNo
 import { HeroAuthLayout } from '../components/auth/HeroAuthLayout';
 import { LoginLoader } from '../components/auth/LoginLoader';
 import { OwlMascot, OwlMood } from '../components/auth/OwlMascot';
+import { ServerUrlDialog } from '../components/auth/ServerUrlDialog';
 import { FormMessage } from '../components/forms/FormMessage';
 import { PasswordField } from '../components/forms/PasswordField';
 import { PrimaryButton } from '../components/forms/PrimaryButton';
@@ -43,6 +44,7 @@ export function Login({ sky = 'auto' }: LoginProps) {
   const [geass, setGeass] = useState(false);
   const geassTimer = useRef<number | undefined>(undefined);
   const [deathNote, setDeathNote] = useState<DeathNoteTrigger | null>(null);
+  const [serverUrlOpen, setServerUrlOpen] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
   const isNight = useIsNight();
@@ -161,7 +163,7 @@ export function Login({ sky = 'auto' }: LoginProps) {
             className="pointer-events-none absolute left-1/2 z-10 w-[110px] -translate-x-1/2"
             style={{ top: -60 }} />
           
-          {/* Hidden hit area over the owl's head: long-press to activate Geass */}
+          {/* Hidden hit area over the owl's head: tap server config, long-press Geass */}
           <button
             type="button"
             tabIndex={-1}
@@ -254,7 +256,15 @@ export function Login({ sky = 'auto' }: LoginProps) {
             Create one
           </Link>
         </p>
+        {status === 'offline' || status === 'error' ? (
+          <p>
+            <button type="button" onClick={() => setServerUrlOpen(true)} className="inline-block py-2 text-[13px] font-semibold text-brand-ember underline-offset-4 hover:text-brand-ember/80 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber">
+              Change server URL
+            </button>
+          </p>
+        ) : null}
       </div>
+      <ServerUrlDialog open={serverUrlOpen} onClose={() => setServerUrlOpen(false)} />
     </HeroAuthLayout>);
 
 }
